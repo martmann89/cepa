@@ -4,9 +4,9 @@
 
 body {
   margin: 0;
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: #f4f5f7;
-  color: #1a1a2e;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #f2f2f0;
+  color: #1a1a18;
   -webkit-font-smoothing: antialiased;
 }
 
