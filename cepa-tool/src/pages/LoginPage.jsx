@@ -108,7 +108,7 @@ export default function LoginPage() {
           <Auth
             supabaseClient={supabase}
             appearance={{ theme: authTheme }}
-            providers={['google']}
+            providers={[]}
             localization={{
               variables: {
                 sign_in: {
