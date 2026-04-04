@@ -1,7 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
+import draw from "../assets/3d"
 
 export default function Dashboard({ session }) {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    if (!canvasRef.current) return
+
+      const { renderer, animationId } = draw(canvasRef.current)
+      const aniId = animationId()
+
+      // Cleanup – wird beim zweiten Aufruf ausgeführt
+      return () => {
+        cancelAnimationFrame(aniId)
+        renderer.dispose()
+      }
+  }, [])
+
   const [loggingOut, setLoggingOut] = useState(false)
   const [activeNav, setActiveNav] = useState('Dashboard')
 
@@ -20,11 +35,13 @@ export default function Dashboard({ session }) {
   ]
 
   return (
+    
     <div style={styles.page}>
       <link
         href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@700&display=swap"
         rel="stylesheet"
       />
+      
 
       {/* Sidebar */}
       <aside style={styles.sidebar}>
@@ -67,45 +84,34 @@ export default function Dashboard({ session }) {
 
       {/* Main content */}
       <main style={styles.main}>
-        <div style={styles.mainHeader}>
-          <div>
-            <h1 style={styles.pageTitle}>Dashboard</h1>
-            <p style={styles.pageSubtitle}>
-              {new Date().toLocaleDateString('de-DE', {
-                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-              })}
-            </p>
+        <div id="canvas-container">
+          
+          <div id="hud">
+            <h1>◈ CAD Viewer</h1>
+            <div class="subtitle">Hauswand · Ansicht 3D · Hover für Details</div>
           </div>
-          <div style={styles.statusBadge}>
-            <div style={styles.statusDot} />
-            Alle Systeme aktiv
+          <div ref={canvasRef}></div>
+          <div id="info-panel">
+            <div class="row"><span class="label">Wandbreite</span><span class="value">8.00 m</span></div>
+            <div class="row"><span class="label">Wandhöhe</span><span class="value">5.00 m</span></div>
+            <div class="row"><span class="label">Wandstärke</span><span class="value">0.30 m</span></div>
+            <div class="row"><span class="label">Tür</span><span class="value">1.00 × 2.20 m</span></div>
+            <div class="row"><span class="label">Fenster L</span><span class="value">1.40 × 1.20 m</span></div>
+            <div class="row"><span class="label">Fenster R</span><span class="value">1.40 × 1.20 m</span></div>
           </div>
-        </div>
 
-        {/* Stats */}
-        <div style={styles.statsGrid}>
-          {[
-            { label: 'Aktive Nutzer', value: '–' },
-            { label: 'Anfragen heute', value: '–' },
-            { label: 'Umsatz (Monat)', value: '–' },
-            { label: 'Offene Aufgaben', value: '–' },
-          ].map(stat => (
-            <div key={stat.label} style={styles.statCard}>
-              <p style={styles.statLabel}>{stat.label}</p>
-              <p style={styles.statValue}>{stat.value}</p>
+          <div id="controls-hint">
+            <span>LMB</span> Drehen &nbsp;·&nbsp; <span>RMB</span> Verschieben &nbsp;·&nbsp; <span>Scroll</span> Zoom
+          </div>
+
+          <canvas id="axis-indicator"></canvas>
+
+          <div id="tooltip">
+            <div class="tooltip-inner">
+              <div class="tooltip-title"><span class="icon"></span><span class="title-text"></span></div>
+              <div class="tooltip-rows"></div>
+              <div class="tooltip-desc"></div>
             </div>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div style={styles.contentCard}>
-          <div style={styles.contentAccent} />
-          <div style={styles.contentBody}>
-            <h2 style={styles.contentTitle}>Bereit loszulegen?</h2>
-            <p style={styles.contentText}>
-              Dein Dashboard ist eingerichtet und einsatzbereit. Füge hier deine eigenen Komponenten, Tabellen oder Charts ein.
-            </p>
-            <div style={styles.pill}>✓ Supabase verbunden</div>
           </div>
         </div>
       </main>
@@ -334,4 +340,197 @@ const styles = {
     fontSize: '0.8rem',
     fontWeight: 600,
   },
+ 
+  body: {
+    background: '#0a0e17',
+    color: '#c8cdd8',
+    fontFamily: "'DM Sans', sans-serif",
+    overflow: 'hidden',
+    height: '100vh',
+    width: '100vw',
+  },
+ 
+  canvasContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+ 
+  canvas: {
+    display: 'block',
+  },
+ 
+  hud: {
+    position: 'absolute',
+    top: '20px',
+    left: '20px',
+    pointerEvents: 'none',
+    zIndex: 10,
+  },
+ 
+  hudH1: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: '14px',
+    fontWeight: 600,
+    color: '#5eead4',
+    letterSpacing: '2px',
+    textTransform: 'uppercase',
+    marginBottom: '6px',
+  },
+ 
+  hudSubtitle: {
+    fontSize: '12px',
+    color: '#475569',
+    fontFamily: "'JetBrains Mono', monospace",
+  },
+ 
+  infoPanel: {
+    position: 'absolute',
+    bottom: '20px',
+    left: '20px',
+    background: 'rgba(10, 14, 23, 0.85)',
+    backdropFilter: 'blur(12px)',
+    border: '1px solid rgba(94, 234, 212, 0.15)',
+    borderRadius: '8px',
+    padding: '16px 20px',
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: '11px',
+    zIndex: 10,
+    minWidth: '260px',
+  },
+ 
+  infoPanelRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '4px 0',
+    borderBottom: '1px solid rgba(255,255,255,0.04)',
+  },
+ 
+  infoPanelRowLast: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '4px 0',
+  },
+ 
+  infoPanelLabel: {
+    color: '#64748b',
+  },
+ 
+  infoPanelValue: {
+    color: '#5eead4',
+    fontWeight: 500,
+  },
+ 
+  controlsHint: {
+    position: 'absolute',
+    bottom: '20px',
+    right: '20px',
+    background: 'rgba(10, 14, 23, 0.85)',
+    backdropFilter: 'blur(12px)',
+    border: '1px solid rgba(94, 234, 212, 0.08)',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: '10px',
+    color: '#475569',
+    zIndex: 10,
+    lineHeight: 1.8,
+  },
+ 
+  controlsHintSpan: {
+    color: '#94a3b8',
+  },
+ 
+  axisIndicator: {
+    position: 'absolute',
+    top: '20px',
+    right: '20px',
+    width: '90px',
+    height: '90px',
+    zIndex: 10,
+  },
+ 
+  tooltip: {
+    position: 'absolute',
+    pointerEvents: 'none',
+    zIndex: 100,
+    opacity: 0,
+    transform: 'translateY(6px)',
+    transition: 'opacity 0.2s ease, transform 0.2s ease',
+    maxWidth: '310px',
+  },
+ 
+  tooltipVisible: {
+    position: 'absolute',
+    pointerEvents: 'none',
+    zIndex: 100,
+    opacity: 1,
+    transform: 'translateY(0)',
+    transition: 'opacity 0.2s ease, transform 0.2s ease',
+    maxWidth: '310px',
+  },
+ 
+  tooltipInner: {
+    background: 'rgba(8, 12, 21, 0.94)',
+    backdropFilter: 'blur(18px)',
+    border: '1px solid rgba(94, 234, 212, 0.25)',
+    borderRadius: '10px',
+    padding: '14px 18px',
+    fontFamily: "'JetBrains Mono', monospace",
+    boxShadow: '0 10px 40px rgba(0,0,0,0.55), 0 0 24px rgba(94, 234, 212, 0.07)',
+  },
+ 
+  tooltipTitle: {
+    fontSize: '12px',
+    fontWeight: 600,
+    color: '#5eead4',
+    letterSpacing: '1px',
+    textTransform: 'uppercase',
+    marginBottom: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+ 
+  tooltipTitleIcon: {
+    width: '14px',
+    height: '14px',
+    borderRadius: '3px',
+    display: 'inline-block',
+    flexShrink: 0,
+  },
+ 
+  tooltipRows: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '3px',
+  },
+ 
+  tooltipRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: '18px',
+    fontSize: '11px',
+  },
+ 
+  tooltipRowLabel: {
+    color: '#64748b',
+  },
+ 
+  tooltipRowValue: {
+    color: '#e2e8f0',
+    fontWeight: 500,
+  },
+ 
+  tooltipDesc: {
+    marginTop: '10px',
+    fontSize: '10.5px',
+    color: '#94a3b8',
+    lineHeight: 1.6,
+    fontFamily: "'DM Sans', sans-serif",
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+    paddingTop: '9px',
+  },
+ 
 }
+
