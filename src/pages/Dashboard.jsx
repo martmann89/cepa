@@ -90,7 +90,8 @@ export default function Dashboard({ session }) {
             <h1>◈ CAD Viewer</h1>
             <div class="subtitle">Hauswand · Ansicht 3D · Hover für Details</div>
           </div>
-          <div ref={canvasRef}></div>
+          <div style={styles.canvasContainer} ref={canvasRef}>
+          </div>
           <div id="info-panel">
             <div class="row"><span class="label">Wandbreite</span><span class="value">8.00 m</span></div>
             <div class="row"><span class="label">Wandhöhe</span><span class="value">5.00 m</span></div>
@@ -233,8 +234,11 @@ const styles = {
   },
   main: {
     flex: 1,
-    padding: '2.5rem',
-    overflowY: 'auto',
+    width: '100vw',
+    height: '100vh',
+    overflow: 'hidden',
+    //padding: '2.5rem',
+    
   },
   mainHeader: {
     display: 'flex',

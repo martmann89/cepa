@@ -5,15 +5,18 @@ export default function draw (canvas) {
   // ─── SCENE ───
   
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0e17);
-  scene.fog = new THREE.FogExp2(0x0a0e17, 0.012);
+  scene.background = new THREE.Color(0xe5e6e3);
+  scene.fog = new THREE.FogExp2(0xe5e6e3, 0.012);
 
-  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 200);
+
   camera.position.set(12, 8, 14);
   camera.lookAt(0, 2, 0);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -478,8 +481,10 @@ export default function draw (canvas) {
     }
 
     // Raycast against interactive objects
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
 
     const hits = raycaster.intersectObjects(interactiveObjects, false);
