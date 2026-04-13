@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wand — Tür & Fenster Zeichnung</title>
+<script src="https://cdn.jsdelivr.net/npm/makerjs/target/js/browser.maker.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --surface2: #1a2234;
+    --border: #2a3550;
+    --accent: #38bdf8;
+    --accent2: #818cf8;
+    --accent3: #f472b6;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --dim-line: #334155;
+    --grid: #1e293b;
+    --wall-fill: rgba(56, 189, 248, 0.04);
+    --door-stroke: #f472b6;
+    --window-stroke: #818cf8;
+    --dim-color: #94a3b8;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+  }
+
+  header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+
+  header h1 span {
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-left: 8px;
+    font-size: 13px;
+  }
+
+  .export-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #0a0e17;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: all 0.2s;
+  }
+
+  .export-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);
+  }
+
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    width: 340px;
+    min-width: 340px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 0;
+  }
+
+  .panel {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .panel-header:hover { background: var(--surface2); }
+
+  .panel-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .panel-icon.wall { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
+  .panel-icon.door { background: rgba(244, 114, 182, 0.15); color: var(--accent3); }
+  .panel-icon.window { background: rgba(129, 140, 248, 0.15); color: var(--accent2); }
+
+  .panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    flex: 1;
+  }
+
+  .panel-body { padding: 4px 20px 20px; }
+
+  .slider-group {
+    margin-bottom: 16px;
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .slider-label span:first-child {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .slider-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 400;
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    min-width: 72px;
+    text-align: right;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+    cursor: pointer;
+  }
+
+  input[type="range"].door-slider::-webkit-slider-thumb {
+    background: var(--accent3);
+    box-shadow: 0 0 8px rgba(244, 114, 182, 0.4);
+  }
+
+  input[type="range"].window-slider::-webkit-slider-thumb {
+    background: var(--accent2);
+    box-shadow: 0 0 8px rgba(129, 140, 248, 0.4);
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .toggle-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .toggle {
+    width: 40px;
+    height: 22px;
+    background: var(--border);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .toggle.active { background: var(--accent); }
+  .toggle.active.door-toggle { background: var(--accent3); }
+  .toggle.active.window-toggle { background: var(--accent2); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s;
+  }
+
+  .toggle.active::after { transform: translateX(18px); }
+
+  .canvas-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.03) 0%, transparent 70%),
+      var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .canvas-area::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.5;
+  }
+
+  #drawing {
+    position: relative;
+    z-index: 1;
+    max-width: 90%;
+    max-height: 85vh;
+  }
+
+  #drawing svg {
+    filter: drop-shadow(0 0 40px rgba(56, 189, 248, 0.08));
+  }
+
+  .coords {
+    position: absolute;
+    bottom: 16px;
+    right: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    z-index: 2;
+  }
+
+  .legend {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    z-index: 2;
+    display: flex;
+    gap: 16px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+  }
+
+  .legend-swatch {
+    width: 16px;
+    height: 3px;
+    border-radius: 1px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>WANDZEICHNUNG <span>maker.js → DXF</span></h1>
+  <button class="export-btn" onclick="exportDXF()">⬇ DXF EXPORT</button>
+</header>
+
+<div class="main">
+  <div class="sidebar">
+
+    <!-- WAND -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon wall">▬</div>
+        <div class="panel-title">Wand</div>
+      </div>
+      <div class="panel-body">
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Breite</span>
+            <span class="slider-value" id="val-wall-w">5000 mm</span>
+          </div>
+          <input type="range" id="wall-w" min="2000" max="10000" step="50" value="5000" oninput="update()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Höhe</span>
+            <span class="slider-value" id="val-wall-h">2800 mm</span>
+          </div>
+          <input type="range" id="wall-h" min="2000" max="4000" step="50" value="2800" oninput="update()">
+        </div>
+      </div>
+    </div>
+
+    <!-- TÜR -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon door">◧</div>
+        <div class="panel-title">Tür</div>
+      </div>
+      <div class="panel-body">
+        <div class="toggle-row">
+          <span class="toggle-label">Tür anzeigen</span>
+          <div class="toggle active door-toggle" id="toggle-door" onclick="toggleEl(this); update()"></div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Breite</span>
+            <span class="slider-value" id="val-door-w">1000 mm</span>
+          </div>
+          <input type="range" class="door-slider" id="door-w" min="600" max="1800" step="10" value="1000" oninput="update()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Höhe</span>
+            <span class="slider-value" id="val-door-h">2100 mm</span>
+          </div>
+          <input type="range" class="door-slider" id="door-h" min="1800" max="2600" step="10" value="2100" oninput="update()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Position X</span>
+            <span class="slider-value" id="val-door-x">400 mm</span>
+          </div>
+          <input type="range" class="door-slider" id="door-x" min="0" max="5000" step="10" value="400" oninput="update()">
+        </div>
+      </div>
+    </div>
+
+    <!-- FENSTER -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon window">☐</div>
+        <div class="panel-title">Fenster</div>
+      </div>
+      <div class="panel-body">
+        <div class="toggle-row">
+          <span class="toggle-label">Fenster anzeigen</span>
+          <div class="toggle active window-toggle" id="toggle-window" onclick="toggleEl(this); update()"></div>
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Breite</span>
+            <span class="slider-value" id="val-win-w">1400 mm</span>
+          </div>
+          <input type="range" class="window-slider" id="win-w" min="400" max="3000" step="10" value="1400" oninput="update()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Höhe</span>
+            <span class="slider-value" id="val-win-h">1200 mm</span>
+          </div>
+          <input type="range" class="window-slider" id="win-h" min="400" max="2000" step="10" value="1200" oninput="update()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Position X</span>
+            <span class="slider-value" id="val-win-x">2800 mm</span>
+          </div>
+          <input type="range" class="window-slider" id="win-x" min="0" max="5000" step="10" value="2800" oninput="update()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Brüstungshöhe</span>
+            <span class="slider-value" id="val-win-y">900 mm</span>
+          </div>
+          <input type="range" class="window-slider" id="win-y" min="200" max="1800" step="10" value="900" oninput="update()">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="canvas-area">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div> Wand</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--accent3)"></div> Tür</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--accent2)"></div> Fenster</div>
+    </div>
+    <div id="drawing"></div>
+    <div class="coords" id="coords">Maße in mm</div>
+  </div>
+</div>
+
+<script>
+let currentModel = null;
+
+function v(id) { return parseFloat(document.getElementById(id).value); }
+function toggleEl(el) { el.classList.toggle('active'); }
+function isActive(id) { return document.getElementById(id).classList.contains('active'); }
+
+function makeDimension(from, to, offset, horizontal) {
+  const paths = {};
+  const extLen = 80;
+  const tickLen = 40;
+  const gap = 30;
+
+  if (horizontal) {
+    const y = from[1] + offset;
+    const dir = offset > 0 ? 1 : -1;
+    // extension lines
+    paths.ext1 = new makerjs.paths.Line([from[0], from[1] + dir * gap], [from[0], y + dir * extLen * 0.3]);
+    paths.ext2 = new makerjs.paths.Line([to[0], to[1] + dir * gap], [to[0], y + dir * extLen * 0.3]);
+    // dimension line
+    paths.dimLine = new makerjs.paths.Line([from[0], y], [to[0], y]);
+    // ticks
+    paths.tick1 = new makerjs.paths.Line([from[0] - tickLen/2, y - tickLen/2], [from[0] + tickLen/2, y + tickLen/2]);
+    paths.tick2 = new makerjs.paths.Line([to[0] - tickLen/2, y - tickLen/2], [to[0] + tickLen/2, y + tickLen/2]);
+  } else {
+    const x = from[0] + offset;
+    const dir = offset > 0 ? 1 : -1;
+    paths.ext1 = new makerjs.paths.Line([from[0] + dir * gap, from[1]], [x + dir * extLen * 0.3, from[1]]);
+    paths.ext2 = new makerjs.paths.Line([to[0] + dir * gap, to[1]], [x + dir * extLen * 0.3, to[1]]);
+    paths.dimLine = new makerjs.paths.Line([x, from[1]], [x, to[1]]);
+    paths.tick1 = new makerjs.paths.Line([x - tickLen/2, from[1] - tickLen/2], [x + tickLen/2, from[1] + tickLen/2]);
+    paths.tick2 = new makerjs.paths.Line([x - tickLen/2, to[1] - tickLen/2], [x + tickLen/2, to[1] + tickLen/2]);
+  }
+
+  return { paths };
+}
+
+function update() {
+  const ww = v('wall-w'), wh = v('wall-h');
+  const dw = v('door-w'), dh = v('door-h'), dx = v('door-x');
+  const winW = v('win-w'), winH = v('win-h'), winX = v('win-x'), winY = v('win-y');
+  const showDoor = isActive('toggle-door');
+  const showWindow = isActive('toggle-window');
+
+  // Clamp door X
+  const maxDoorX = ww - dw;
+  document.getElementById('door-x').max = maxDoorX;
+  const clampedDx = Math.min(dx, maxDoorX);
+
+  // Clamp window X
+  const maxWinX = ww - winW;
+  document.getElementById('win-x').max = maxWinX;
+  const clampedWinX = Math.min(winX, maxWinX);
+
+  // Clamp window Y
+  const maxWinY = wh - winH;
+  document.getElementById('win-y').max = maxWinY;
+  const clampedWinY = Math.min(winY, maxWinY);
+
+  // Update value displays
+  document.getElementById('val-wall-w').textContent = ww + ' mm';
+  document.getElementById('val-wall-h').textContent = wh + ' mm';
+  document.getElementById('val-door-w').textContent = dw + ' mm';
+  document.getElementById('val-door-h').textContent = dh + ' mm';
+  document.getElementById('val-door-x').textContent = clampedDx + ' mm';
+  document.getElementById('val-win-w').textContent = winW + ' mm';
+  document.getElementById('val-win-h').textContent = winH + ' mm';
+  document.getElementById('val-win-x').textContent = clampedWinX + ' mm';
+  document.getElementById('val-win-y').textContent = clampedWinY + ' mm';
+
+  // --- Build model ---
+  const wall = new makerjs.models.Rectangle(ww, wh);
+  wall.layer = 'wall';
+
+  const model = { models: { wall }, paths: {} };
+
+  // Door
+  if (showDoor) {
+    const door = new makerjs.models.Rectangle(dw, dh);
+    makerjs.model.moveRelative(door, [clampedDx, 0]);
+    door.layer = 'door';
+    model.models.door = door;
+
+    // Door swing arc
+    model.paths.doorSwing = new makerjs.paths.Arc([clampedDx, 0], dw, 0, 90);
+    model.paths.doorSwing.layer = 'door';
+    model.paths.doorSwingLine = new makerjs.paths.Line([clampedDx, 0], [clampedDx, dw]);
+    model.paths.doorSwingLine.layer = 'door';
+
+    // Door dimensions
+    const doorDimH = makeDimension([clampedDx, 0], [clampedDx + dw, 0], -200, true);
+    makerjs.model.layer(doorDimH, 'dims');
+    model.models.doorDimH = doorDimH;
+
+    const doorDimV = makeDimension([clampedDx, 0], [clampedDx, dh], -200, false);
+    makerjs.model.layer(doorDimV, 'dims');
+    model.models.doorDimV = doorDimV;
+  }
+
+  // Window
+  if (showWindow) {
+    const win = new makerjs.models.Rectangle(winW, winH);
+    makerjs.model.moveRelative(win, [clampedWinX, clampedWinY]);
+    win.layer = 'window';
+    model.models.window = win;
+
+    // Window cross
+    model.paths.winCrossH = new makerjs.paths.Line(
+      [clampedWinX, clampedWinY + winH / 2],
+      [clampedWinX + winW, clampedWinY + winH / 2]
+    );
+    model.paths.winCrossH.layer = 'window';
+
+    model.paths.winCrossV = new makerjs.paths.Line(
+      [clampedWinX + winW / 2, clampedWinY],
+      [clampedWinX + winW / 2, clampedWinY + winH]
+    );
+    model.paths.winCrossV.layer = 'window';
+
+    // Window dimensions
+    const winDimH = makeDimension([clampedWinX, clampedWinY + winH], [clampedWinX + winW, clampedWinY + winH], 200, true);
+    makerjs.model.layer(winDimH, 'dims');
+    model.models.winDimH = winDimH;
+
+    const winDimV = makeDimension([clampedWinX + winW, clampedWinY], [clampedWinX + winW, clampedWinY + winH], 200, false);
+    makerjs.model.layer(winDimV, 'dims');
+    model.models.winDimV = winDimV;
+
+    // Brüstungshöhe
+    const bruestDim = makeDimension([clampedWinX + winW, 0], [clampedWinX + winW, clampedWinY], 400, false);
+    makerjs.model.layer(bruestDim, 'dims');
+    model.models.bruestDim = bruestDim;
+  }
+
+  // Wall overall dimensions
+  const wallDimH = makeDimension([0, 0], [ww, 0], -400, true);
+  makerjs.model.layer(wallDimH, 'dims');
+  model.models.wallDimH = wallDimH;
+
+  const wallDimV = makeDimension([ww, 0], [ww, wh], 400, false);
+  makerjs.model.layer(wallDimV, 'dims');
+  model.models.wallDimV = wallDimV;
+
+  currentModel = model;
+
+  // Render SVG
+  const svg = makerjs.exporter.toSVG(model, {
+    layerOptions: {
+      wall:   { stroke: '#38bdf8', strokeWidth: '2.5', fill: 'rgba(56,189,248,0.04)' },
+      door:   { stroke: '#f472b6', strokeWidth: '1.8', fill: 'none', strokeDasharray: '8,4' },
+      window: { stroke: '#818cf8', strokeWidth: '1.8', fill: 'none' },
+      dims:   { stroke: '#64748b', strokeWidth: '0.8', fill: 'none' }
+    },
+    svgAttrs: { style: 'max-width:100%; height:auto;' },
+    padding: 500,
+    useSvgPathOnly: false,
+    viewBox: true
+  });
+
+  document.getElementById('drawing').innerHTML = svg;
+
+  // Add dimension text labels via DOM
+  addDimLabels(ww, wh, dw, dh, clampedDx, winW, winH, clampedWinX, clampedWinY, showDoor, showWindow);
+}
+
+function addDimLabels(ww, wh, dw, dh, dx, winW, winH, winX, winY, showDoor, showWindow) {
+  const svgEl = document.querySelector('#drawing svg');
+  if (!svgEl) return;
+
+  const ns = 'http://www.w3.org/2000/svg';
+
+  function addText(x, y, text, color = '#94a3b8', size = 100) {
+    const t = document.createElementNS(ns, 'text');
+    t.setAttribute('x', x);
+    t.setAttribute('y', -y); // maker.js flips Y
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('dominant-baseline', 'middle');
+    t.setAttribute('fill', color);
+    t.setAttribute('font-family', 'DM Mono, monospace');
+    t.setAttribute('font-size', size);
+    t.textContent = text;
+    svgEl.querySelector('g') ? svgEl.querySelector('g').appendChild(t) : svgEl.appendChild(t);
+  }
+
+  // Wall dims
+  addText(ww / 2, -480, ww + ' mm', '#38bdf8', 110);
+  addText(ww + 480, wh / 2, wh + ' mm', '#38bdf8', 110);
+
+  // Door dims
+  if (showDoor) {
+    addText(dx + dw / 2, -260, dw + '', '#f472b6', 90);
+    addText(dx - 260, dh / 2, dh + '', '#f472b6', 90);
+  }
+
+  // Window dims
+  if (showWindow) {
+    addText(winX + winW / 2, winY + winH + 260, winW + '', '#818cf8', 90);
+    addText(winX + winW + 260, winY + winH / 2, winH + '', '#818cf8', 90);
+    addText(winX + winW + 480, winY / 2, '↕ ' + winY, '#64748b', 80);
+  }
+}
+
+function exportDXF() {
+  if (!currentModel) return;
+
+  const dxf = makerjs.exporter.toDXF(currentModel, {
+    units: makerjs.unitType.Millimeter,
+    layerOptions: {
+      wall:   { color: 1 },   // red
+      door:   { color: 5 },   // blue
+      window: { color: 3 },   // green
+      dims:   { color: 8 }    // grey
+    }
+  });
+
+  const blob = new Blob([dxf], { type: 'application/dxf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'wandzeichnung.dxf';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Initial render
+update();
+</script>
+
+</body>
+</html>

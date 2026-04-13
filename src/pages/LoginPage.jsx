@@ -77,7 +77,7 @@ export default function LoginPage() {
           <div style={styles.logoMark}>◈</div>
           <h1 style={styles.brand}>Meine App</h1>
           <p style={styles.tagline}>
-            Professionell. Zuverlässig.<br />
+            Professionellll. Zuverlässig.<br />
             Alles was dein Unternehmen braucht.
           </p>
           <div style={styles.divider} />

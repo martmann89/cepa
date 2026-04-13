@@ -3,6 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import LoginPage from './pages/LoginPage'
 import Dashboard from './pages/Dashboard'
+import AuthPage from './auth-page'
+import CEPAMontageplan from './pages/cepa-montageplan';
+import Makerjs from './pages/makerjs-rect-cutout'
 
 // Schützt eine Route – leitet nicht eingeloggte User zur Login-Seite
 function PrivateRoute({ session, children }) {
@@ -34,13 +37,13 @@ export default function App() {
     <Routes>
       <Route
         path="/login"
-        element={session ? <Navigate to="/" replace /> : <LoginPage />}
+        element={session ? <Navigate to="/" replace /> : <AuthPage />}
       />
       <Route
         path="/"
         element={
           <PrivateRoute session={session}>
-            <Dashboard session={session} />
+            <Makerjs session={session} />
           </PrivateRoute>
         }
       />
