@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { buildModel } from "../assets/modelFunctions";
-
+import { buildModel, getTotalLength } from "../assets/modelFunctions";
+import { supabase } from "../supabaseClient";
 import makerjs from 'makerjs';
 
 const DEFAULTS = {
@@ -9,12 +9,14 @@ const DEFAULTS = {
   cutW: 1000,
   cutH: 700,
   cutX: 2000,   // Offset von links
-  cutY: 1200,   // Offset von unten (maker.js Koordinaten: Y wächst nach oben)
+  cutY: 1200,   // Offset von unten (maker.js Koordinaten: Y wächst nach oben),
+  nof_refinements: 0,
+  spacing_hor: 200,
+  spacing_ver: 200,
+  offset_x: 50,
+  offset_y: 50,
+  pipesLength: 0
 };
-
-function buildPipeLayer ({ rectW, rectH, cutW, cutH, cutX, cutY }){
-  const randabstand = 100
-}
 
 export default function Makerjs( {session }) {
   const [p, setP] = useState(DEFAULTS);
@@ -22,6 +24,13 @@ export default function Makerjs( {session }) {
   const [svgContent, setSvgContent] = useState("");
   const [dxfContent, setDxfContent] = useState("");
   const [error, setError] = useState(null);
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [activeNav, setActiveNav] = useState('Dashboard')
+  
+  const handleLogout = async () => {
+    setLoggingOut(true)
+    await supabase.auth.signOut()
+  }
  
   const set = (key) => (e) => setP((prev) => ({ ...prev, [key]: Number(e.target.value) }));
 
@@ -38,6 +47,7 @@ export default function Makerjs( {session }) {
     if (!isValid) return;
     try {
       const { svgModel,dxfModel } = buildModel(p);
+      p["pipesLength"] = Math.round((getTotalLength(dxfModel)/1000 + Number.EPSILON) * 100) / 100;
       const svg = makerjs.exporter.toSVG(svgModel, {
         layerOptions : {
           Wand : {
@@ -128,6 +138,16 @@ export default function Makerjs( {session }) {
             <Slider label="Offset Y" unit="mm" min={1} max={p.rectH - p.cutH - 1} step={1}
               value={p.cutY} onChange={set("cutY")} />
           </Group>
+          <Group label="Verlegung">
+            <Slider label="Abstand horizontal" unit="mm" min={50} max={300} step={10}
+              value={p.spacing_hor} onChange={set("spacing_hor")} />
+            <Slider label="Abstand vertikal" unit="mm" min={50} max={300} step={10}
+              value={p.spacing_ver} onChange={set("spacing_ver")} />
+          </Group>
+          <Group label="Gitter">
+            <Slider label="Anzahl Verfeinerungen" unit="mm" min={0} max={4} step={1}
+              value={p.nof_refinements} onChange={set("nof_refinements")} />
+          </Group>
 
           {!isValid && (
             <div style={s.warn}>⚠ Ausschnitt liegt außerhalb des Rechtecks</div>
@@ -135,13 +155,11 @@ export default function Makerjs( {session }) {
 
           {/* Info */}
           <div style={s.infoBox}>
-            <InfoRow label="Außen" value={`${p.rectW} × ${p.rectH}`} />
-            <InfoRow label="Ausschnitt" value={`${p.cutW} × ${p.cutH}`} />
-            <InfoRow label="Pos (X/Y)" value={`${p.cutX} / ${p.cutY}`} />
-            <InfoRow
-              label="Fläche"
-              value={`${(p.rectW * p.rectH - p.cutW * p.cutH).toLocaleString()} mm²`}
-            />
+            <InfoRow label="Randabstand x" value={`${p.offset_x} mm`} />
+            <InfoRow label="Randabstand y" value={`${p.offset_y} mm`} />
+            <InfoRow label="Rohrlänge" value={`${p.pipesLength} m`} />
+
+            
           </div>
 
           <button
@@ -157,6 +175,9 @@ export default function Makerjs( {session }) {
             disabled={!dxfContent}
           >
             ↓ DXF exportieren
+          </button>
+          <button onClick={handleLogout} disabled={loggingOut} style={s.logoutBtn}>
+            {loggingOut ? '...' : '↪ Abmelden'}
           </button>
         </aside>
 
@@ -213,6 +234,18 @@ function InfoRow({ label, value }) {
 
 // ── Styles ─────────────────────────────────────────────────────────────────────
 const s = {
+  logoutBtn: {
+    width: '100%',
+    padding: '0.6rem',
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '6px',
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+    textAlign: 'left',
+    fontFamily: `'DM Sans', sans-serif`,
+  },
   root: {
     background: "#0d0d0d",
     minHeight: "100vh",
