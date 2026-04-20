@@ -101,7 +101,7 @@ export default function AuthPage() {
               type="text"
               value={inviteKey}
               onChange={(e) => setInviteKey(e.target.value.toUpperCase())}
-              placeholder="z.B. ALPHA-2024"
+              placeholder="Code"
               required
               style={{ ...inputStyle, letterSpacing: 1 }}
             />
