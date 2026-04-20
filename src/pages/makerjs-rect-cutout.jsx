@@ -121,7 +121,7 @@ export default function Makerjs( {session }) {
       <div style={s.body}>
         {/* Sidebar */}
         <aside style={s.sidebar}>
-          <Group label="Außenrechteck">
+          <Group label="Moduldimensionen">
             <Slider label="Breite" unit="mm" min={3000} max={5000} step={5}
               value={p.rectW} onChange={set("rectW")} />
             <Slider label="Höhe" unit="mm" min={2000} max={3000} step={5}
